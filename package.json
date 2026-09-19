@@ -1,0 +1,13 @@
+{
+  "name": "obsrv",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w backend & npm run dev -w frontend; wait",
+    "build": "npm run build -w backend && npm run build -w frontend",
+    "start": "npm run start -w backend & npm run start -w frontend; wait"
+  }
+}
