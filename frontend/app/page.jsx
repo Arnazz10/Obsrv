@@ -15,6 +15,63 @@ function severityTone(severity) {
   return 'blue';
 }
 
+function MetricPill({ label, value, tone = 'blue' }) {
+  const tones = {
+    blue: 'from-sky-500/20 to-cyan-500/10 text-sky-200 border-sky-500/20',
+    green: 'from-emerald-500/20 to-green-500/10 text-emerald-200 border-emerald-500/20',
+    amber: 'from-amber-500/20 to-yellow-500/10 text-amber-200 border-amber-500/20',
+    red: 'from-red-500/20 to-rose-500/10 text-red-200 border-red-500/20'
+  };
+
+  return (
+    <div className={`rounded-2xl border bg-gradient-to-br px-4 py-3 ${tones[tone] || tones.blue}`}>
+      <div className="text-xs uppercase tracking-[0.22em] opacity-80">{label}</div>
+      <div className="mt-2 text-2xl font-semibold tracking-tight">{value}</div>
+    </div>
+  );
+}
+
+function MiniBars({ data }) {
+  const colors = ['bg-sky-500', 'bg-cyan-400', 'bg-amber-400'];
+  return (
+    <div className="flex h-64 items-end justify-between gap-4 px-2 pb-2 pt-4">
+      {data.map((item) => (
+        <div key={item.day} className="flex flex-1 flex-col items-center gap-2">
+          <div className="flex h-44 items-end gap-1.5">
+            {item.segments.map((segment, index) => (
+              <div key={`${item.day}-${index}`} className={`w-2.5 rounded-full ${colors[index % colors.length]}`} style={{ height: `${segment}%` }} />
+            ))}
+          </div>
+          <div className="text-xs text-slate-300">{item.day}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Gauge({ value }) {
+  const progress = Math.max(0, Math.min(100, value));
+  const style = {
+    background: `conic-gradient(from 200deg, #7fe1e8 0deg 72deg, #1e2c68 72deg 178deg, #f7b924 178deg 265deg, transparent 265deg 360deg)`
+  };
+  return (
+    <div className="relative mx-auto h-52 w-52">
+      <div className="absolute inset-0 rounded-full bg-gradient-to-b from-white/5 to-transparent opacity-80" style={style} />
+      <div className="absolute inset-[18px] rounded-full border border-white/10 bg-[#090d18]" />
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+        <div className="text-sm text-slate-400">Saving</div>
+        <div className="mt-2 text-4xl font-semibold tracking-tight text-white">$ 21,550</div>
+        <div className="mt-3 text-xs text-slate-400">{progress}% of monthly target</div>
+      </div>
+      <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-5 text-xs text-slate-300">
+        <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-cyan-300" /> Unallocated</span>
+        <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-indigo-500" /> Sale</span>
+        <span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-amber-400" /> Sport</span>
+      </div>
+    </div>
+  );
+}
+
 const demoData = {
   regionErrors: [
     { region_id: 1, region_name: 'US', error_count: 18 },
@@ -68,125 +125,168 @@ export default function DashboardPage() {
   }, [data]);
 
   if (!data) {
-    return <div className="text-slate-400">Loading dashboard...</div>;
+    return <div className="text-slate-300">Loading dashboard...</div>;
   }
+
+  const activity = [
+    { name: 'Cody Fisher', action: 'Deleted 2 items from Group Prime', time: 'Just now' },
+    { name: 'Eleanor Pena', action: 'Added 2 items to Group Prime', time: '15 mins ago' },
+    { name: 'Jake Black', action: 'Added 2 items to Group Prime', time: '16 mins ago' }
+  ];
+
+  const requests = [
+    { name: 'Savannah Nguyen', handle: '@savannn', color: 'bg-rose-400' },
+    { name: 'Cameron Williamson', handle: '@cameronwill', color: 'bg-sky-400' },
+    { name: 'Kristin Watson', handle: '@kris', color: 'bg-indigo-400' }
+  ];
+
+  const chartData = [
+    { day: 'Mon', segments: [82, 16, 12] },
+    { day: 'Tue', segments: [54, 28, 11] },
+    { day: 'Wed', segments: [75, 20, 13] },
+    { day: 'Thu', segments: [50, 31, 15] },
+    { day: 'Fri', segments: [67, 18, 14] }
+  ];
 
   return (
     <div className="space-y-6">
       {notice ? <Alert tone="amber">{notice}</Alert> : null}
 
-      <section className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardDescription>Frontend</CardDescription>
-            <CardTitle className="text-3xl text-emerald-300">Ready</CardTitle>
+      <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr_1fr]">
+        <Card className="overflow-hidden border-white/10 bg-[#0b1223]/90">
+          <CardHeader className="border-white/8 px-5 py-4">
+            <CardTitle className="text-base font-medium">Analysis</CardTitle>
           </CardHeader>
-          <CardContent className="text-sm text-slate-400">Next.js app is serving the observability UI.</CardContent>
+          <CardContent className="px-4 pb-5 pt-0">
+            <MiniBars data={chartData} />
+          </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardDescription>Backend API</CardDescription>
-            <CardTitle className="text-3xl capitalize">{health.backend}</CardTitle>
+
+        <Card className="overflow-hidden border-white/10 bg-[#0b1223]/90">
+          <CardHeader className="border-white/8 px-5 py-4">
+            <CardTitle className="text-base font-medium">Activity Log</CardTitle>
           </CardHeader>
-          <CardContent className="text-sm text-slate-400">Express API health check and data endpoints.</CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardDescription>Oracle database</CardDescription>
-            <CardTitle className="text-3xl capitalize">{health.database}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-slate-400">Connection state reported by the backend health endpoint.</CardContent>
-        </Card>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-4">
-        {data.regionErrors.map((region) => (
-          <Card key={region.region_id}>
-            <CardHeader>
-              <CardDescription>{region.region_name}</CardDescription>
-              <CardTitle className="text-3xl">{region.error_count}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-slate-400">Errors in the last 24 hours</CardContent>
-          </Card>
-        ))}
-        <Card>
-          <CardHeader>
-            <CardDescription>Fleet total</CardDescription>
-            <CardTitle className="text-3xl">{totalErrors}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-slate-400">Critical and error events</CardContent>
-        </Card>
-      </section>
-
-      {data.anomalies.length > 0 ? (
-        <Alert tone="red">
-          Anomaly detected for {data.anomalies[0].service_name} in {data.anomalies[0].region_name}: current hour error volume is above the 3σ baseline.
-        </Alert>
-      ) : (
-        <Alert tone="blue">No anomaly spikes detected in the latest hourly window.</Alert>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Hourly error trend</CardTitle>
-          <CardDescription>Aggregated from the Oracle materialized view</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <HourlyTrendChart data={data.hourlyTrend} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Top failing services</CardTitle>
-          <CardDescription>Ranked by region using analytic functions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHead className="grid-cols-[1.2fr_1.2fr_0.7fr_0.7fr_0.7fr]">
-              <div>Region</div>
-              <div>Service</div>
-              <div>Errors</div>
-              <div>Region Rank</div>
-              <div>Global Rank</div>
-            </TableHead>
-            {data.topServices.map((row) => (
-              <TableRow key={`${row.region_name}-${row.service_name}`} className="grid-cols-[1.2fr_1.2fr_0.7fr_0.7fr_0.7fr] items-center">
-                <TableCell>{row.region_name}</TableCell>
-                <TableCell>{row.service_name}</TableCell>
-                <TableCell>{row.error_count}</TableCell>
-                <TableCell>{row.region_rank}</TableCell>
-                <TableCell>{row.global_rank}</TableCell>
-              </TableRow>
-            ))}
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Latest anomaly flags</CardTitle>
-          <CardDescription>Service-level baseline comparison with LAG and rolling statistics</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {data.anomalies.length === 0 ? (
-            <div className="text-sm text-slate-400">No anomalous services right now.</div>
-          ) : (
-            data.anomalies.map((row) => (
-              <div key={`${row.service_id}-${row.hour_start_utc}`} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-500/15 bg-red-500/8 px-4 py-3">
-                <div>
-                  <div className="font-medium text-white">{row.service_name}</div>
-                  <div className="text-sm text-slate-400">{row.region_name} • {row.hour_start_utc}</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge tone={severityTone('C')}>Spike</Badge>
-                  <span className="text-sm text-slate-300">Count {row.error_count}</span>
+          <CardContent className="space-y-4 px-5 pb-5 pt-0">
+            {activity.map((item, index) => (
+              <div key={item.name} className={index < activity.length - 1 ? 'border-b border-white/8 pb-4' : ''}>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-sm font-medium text-white">{item.name}</div>
+                    <div className="mt-1 text-xs text-slate-400">{item.action}</div>
+                  </div>
+                  <div className="text-xs text-slate-500">{item.time}</div>
                 </div>
               </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
+            ))}
+            <button className="mt-1 w-full rounded-xl bg-[#1b2d6d] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#223882]">
+              View All
+            </button>
+          </CardContent>
+        </Card>
+
+        <Card className="overflow-hidden border-white/10 bg-[#0b1223]/90">
+          <CardHeader className="border-white/8 px-5 py-4">
+            <CardTitle className="text-base font-medium">Recent Activity</CardTitle>
+          </CardHeader>
+          <CardContent className="px-4 pb-5 pt-0">
+            <Gauge value={72} />
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <MetricPill label="Frontend" value="Ready" tone="green" />
+        <MetricPill label="Backend API" value={health.backend} tone={health.backend === 'ok' ? 'green' : 'red'} />
+        <MetricPill label="Oracle DB" value={health.database} tone={health.database === 'connected' ? 'green' : 'amber'} />
+        <MetricPill label="Fleet total" value={totalErrors} tone="blue" />
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[1.5fr_1fr]">
+        <Card className="overflow-hidden border-white/10 bg-[#0b1223]/90">
+          <CardHeader className="flex flex-row items-center justify-between border-white/8 px-5 py-4">
+            <div>
+              <CardTitle className="text-base font-medium">Purchase</CardTitle>
+              <CardDescription>Most recent log activity and region-level trends</CardDescription>
+            </div>
+            <button className="rounded-xl bg-[#1b2d6d] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#223882]">
+              New Transaction
+            </button>
+          </CardHeader>
+          <CardContent className="px-5 pb-5 pt-0">
+            <div className="mb-4 flex flex-wrap gap-2">
+              {['Most Recent', 'All Status', 'Billing'].map((filter) => (
+                <button key={filter} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-200 hover:bg-white/10">
+                  {filter}
+                </button>
+              ))}
+            </div>
+
+            <div className="overflow-hidden rounded-2xl border border-white/10">
+              <Table>
+                <TableHead className="grid-cols-[1.2fr_1.1fr_0.7fr_0.9fr_0.5fr]">
+                  <div>User</div>
+                  <div>Status</div>
+                  <div>Date</div>
+                  <div>Amount</div>
+                  <div> </div>
+                </TableHead>
+                {data.topServices.map((row, index) => (
+                  <TableRow key={`${row.region_name}-${row.service_name}`} className="grid-cols-[1.2fr_1.1fr_0.7fr_0.9fr_0.5fr] items-center gap-3 border-white/8">
+                    <TableCell>
+                      <div className="font-medium text-white">{row.service_name}</div>
+                      <div className="text-xs text-slate-400">{row.region_name}</div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge tone={index === 0 ? 'green' : 'amber'}>{index === 0 ? 'Success' : 'Pending'}</Badge>
+                    </TableCell>
+                    <TableCell className="text-slate-300">21 Aug, 2023</TableCell>
+                    <TableCell className="text-slate-300">+ $22,124.00</TableCell>
+                    <TableCell className="text-right text-slate-400">Detail</TableCell>
+                  </TableRow>
+                ))}
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="space-y-4">
+          <Card className="overflow-hidden border-white/10 bg-[#0b1223]/90">
+            <CardHeader className="flex flex-row items-center justify-between border-white/8 px-5 py-4">
+              <CardTitle className="text-base font-medium">New Request</CardTitle>
+              <button className="text-sm text-slate-400 hover:text-white">View All</button>
+            </CardHeader>
+            <CardContent className="space-y-4 px-5 pb-5 pt-0">
+              {requests.map((request) => (
+                <div key={request.name} className="flex items-center justify-between gap-3 border-b border-white/8 pb-4 last:border-none last:pb-0">
+                  <div className="flex items-center gap-3">
+                    <div className={`h-10 w-10 rounded-full ${request.color}`} />
+                    <div>
+                      <div className="text-sm font-medium text-white">{request.name}</div>
+                      <div className="text-xs text-slate-400">{request.handle}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-slate-400">
+                    <span>✕</span>
+                    <span>▾</span>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="overflow-hidden border-sky-500/20 bg-gradient-to-br from-sky-600/20 to-indigo-900/40">
+            <CardHeader className="border-white/8 px-5 py-4">
+              <CardTitle className="text-lg font-semibold text-cyan-200">Explore more feature</CardTitle>
+              <CardDescription className="text-sky-100/75">Get Premium today</CardDescription>
+            </CardHeader>
+            <CardContent className="pb-5 pt-0">
+              <button className="rounded-xl border border-sky-300/40 px-4 py-2 text-sm font-medium text-sky-100 hover:bg-sky-400/10">
+                Get Now
+              </button>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
     </div>
   );
 }

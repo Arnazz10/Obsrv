@@ -1,5 +1,5 @@
 import './globals.css';
-import { TopNav } from '../components/layout/top-nav';
+import { AppShell } from '../components/layout/app-shell';
 
 export const metadata = {
   title: 'Obsrv',
@@ -10,8 +10,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <TopNav />
-        <main className="mx-auto max-w-7xl px-5 py-8">{children}</main>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );
