@@ -18,6 +18,25 @@ function severityTone(severity) {
   return 'blue';
 }
 
+const demoRows = [
+  {
+    log_id: 1,
+    service_name: 'payment-gateway',
+    region_name: 'US',
+    local_log_time: '2026-09-20 12:04:10 -07:00',
+    severity: 'C',
+    message: 'payment gateway timeout'
+  },
+  {
+    log_id: 2,
+    service_name: 'cache-service',
+    region_name: 'Japan',
+    local_log_time: '2026-09-20 04:10:22 +09:00',
+    severity: 'W',
+    message: 'cache miss rate high'
+  }
+];
+
 export default function LogsPage() {
   const [filters, setFilters] = useState({ region: '', service: '', severity: '', from: '', to: '' });
   const [rows, setRows] = useState([]);
@@ -40,7 +59,8 @@ export default function LogsPage() {
       const data = await getJson(`/api/logs${params.toString() ? `?${params.toString()}` : ''}`);
       setRows(data.rows || []);
     } catch (err) {
-      setError(err.message);
+      setError(`Demo mode: ${err.message}`);
+      setRows(demoRows);
     } finally {
       setLoading(false);
     }
@@ -74,6 +94,8 @@ export default function LogsPage() {
       </Card>
 
       {error ? <Alert tone="red">{error}</Alert> : null}
+
+      {rows.length === 0 ? <Alert tone="blue">No logs loaded yet. Apply filters or wait for the stream.</Alert> : null}
 
       <Card>
         <CardHeader>

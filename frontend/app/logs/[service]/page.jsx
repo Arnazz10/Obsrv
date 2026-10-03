@@ -15,23 +15,51 @@ function severityTone(severity) {
   return 'blue';
 }
 
+const demoData = {
+  service: 'payment-gateway',
+  rows: [
+    {
+      log_id: 1,
+      region_name: 'US',
+      local_log_time: '2026-09-20 12:04:10 -07:00',
+      severity: 'C',
+      user_impact: 'transactions may be delayed or declined',
+      message: 'payment gateway timeout',
+      payload: { message: 'payment gateway timeout', meta: { user_impact: 'transactions may be delayed or declined' } }
+    },
+    {
+      log_id: 2,
+      region_name: 'EU',
+      local_log_time: '2026-09-20 20:10:22 +01:00',
+      severity: 'E',
+      user_impact: 'transactions may be delayed or declined',
+      message: 'checkout API not responding',
+      payload: { message: 'checkout API not responding', meta: { user_impact: 'transactions may be delayed or declined' } }
+    }
+  ]
+};
+
 export default function ServiceDetailPage() {
   const { service } = useParams();
   const [data, setData] = useState(null);
-  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
 
   useEffect(() => {
     if (!service) return;
     getJson(`/api/logs/service/${encodeURIComponent(service)}`)
       .then(setData)
-      .catch((err) => setError(err.message));
+      .catch((err) => {
+        setNotice(`Demo mode: ${err.message}`);
+        setData(demoData);
+      });
   }, [service]);
 
-  if (error) return <Alert tone="red">{error}</Alert>;
   if (!data) return <div className="text-slate-400">Loading service logs...</div>;
 
   return (
     <div className="space-y-6">
+      {notice ? <Alert tone="amber">{notice}</Alert> : null}
+
       <Card>
         <CardHeader>
           <CardTitle>{data.service}</CardTitle>

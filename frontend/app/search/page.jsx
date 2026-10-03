@@ -15,6 +15,29 @@ function severityTone(severity) {
   return 'blue';
 }
 
+const demoResults = [
+  {
+    log_id: 1,
+    service_name: 'payment-gateway',
+    region_name: 'US',
+    local_log_time: '2026-09-20 12:04:10 -07:00',
+    severity: 'C',
+    message: 'payment gateway timeout',
+    distance: 0.0312,
+    similarity: 0.9688
+  },
+  {
+    log_id: 2,
+    service_name: 'checkout-api',
+    region_name: 'EU',
+    local_log_time: '2026-09-20 20:10:22 +01:00',
+    severity: 'E',
+    message: 'checkout API not responding',
+    distance: 0.0421,
+    similarity: 0.9579
+  }
+];
+
 export default function SearchPage() {
   const [query, setQuery] = useState('database connection timeout');
   const [results, setResults] = useState([]);
@@ -28,7 +51,8 @@ export default function SearchPage() {
       const data = await getJson('/api/logs/search?q=' + encodeURIComponent(value));
       setResults(data.results || []);
     } catch (err) {
-      setError(err.message);
+      setError(`Demo mode: ${err.message}`);
+      setResults(demoResults);
     } finally {
       setLoading(false);
     }
@@ -54,6 +78,8 @@ export default function SearchPage() {
       </Button>
 
       {error ? <Alert tone="red">{error}</Alert> : null}
+
+      {results.length === 0 ? <Alert tone="blue">Run a search to see semantically similar logs.</Alert> : null}
 
       <div className="grid gap-4">
         {results.map((row) => (
