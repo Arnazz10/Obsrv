@@ -7,7 +7,8 @@ export function apiUrl(path) {
 export async function getJson(path) {
   const response = await fetch(apiUrl(path), { cache: 'no-store' });
   if (!response.ok) {
-    throw new Error(`Request failed: ${response.status}`);
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || `Request failed: ${response.status}`);
   }
   return response.json();
 }

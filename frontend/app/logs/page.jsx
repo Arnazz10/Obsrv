@@ -56,11 +56,11 @@ export default function LogsPage() {
     <style jsx>{`
       .filter-panel { margin-bottom:14px; }
       .filter-form { padding:14px; display:grid; grid-template-columns:repeat(5,minmax(110px,1fr)) auto; gap:9px; align-items:end; }
-      .filter-form label { display:flex; flex-direction:column; gap:6px; color:#91989d; font-size:9px; }
-      .filter-form input,.filter-form select { height:32px; min-width:0; border:1px solid #303538; background:#0e1011; color:#d9dcde; border-radius:4px; padding:0 8px; font-size:10px; }
-      .apply-button,.clear-button { border:1px solid #31518b; background:#1a3159; color:#c3d4f4; border-radius:4px; height:32px; padding:0 12px; cursor:pointer; font-size:10px; }
+      .filter-form label { display:flex; flex-direction:column; gap:8px; color:#a7adb1; font-size:12px; }
+      .filter-form input,.filter-form select { height:42px; min-width:0; border:1px solid #303538; background:#0e1011; color:#d9dcde; border-radius:6px; padding:0 11px; font-size:13px; }
+      .apply-button,.clear-button { border:1px solid #31518b; background:#1a3159; color:#c3d4f4; border-radius:6px; height:42px; padding:0 16px; cursor:pointer; font-size:13px; }
       .apply-button:hover { background:#234071; }.apply-button:disabled { opacity:.55; cursor:wait; }
-      .clear-button { border-color:#303538; background:transparent; color:#969da2; height:25px; }.clear-button:hover { color:#e0e2e3; background:#ffffff08; }
+      .clear-button { border-color:#303538; background:transparent; color:#aeb4b8; height:34px; font-size:12px; }.clear-button:hover { color:#e0e2e3; background:#ffffff08; }
       .log-results { min-height:230px; }
       @media(max-width:900px) { .filter-form { grid-template-columns:repeat(3,minmax(110px,1fr)); }.filter-form button { grid-column:span 1; } }
       @media(max-width:580px) { .filter-form { grid-template-columns:repeat(2,minmax(0,1fr)); }.filter-form label { min-width:0; }.filter-form button { width:100%; } }
