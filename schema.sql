@@ -16,7 +16,7 @@ BEGIN
   EXECUTE IMMEDIATE 'DROP MATERIALIZED VIEW LOG ON logs';
 EXCEPTION
   WHEN OTHERS THEN
-    IF SQLCODE NOT IN (-12003, -12005, -12006, -12007) THEN RAISE; END IF;
+    IF SQLCODE NOT IN (-942, -12003, -12005, -12006, -12007) THEN RAISE; END IF;
 END;
 /
 
@@ -78,7 +78,7 @@ CREATE TABLE logs (
   CONSTRAINT fk_logs_service FOREIGN KEY (service_id) REFERENCES services(service_id),
   CONSTRAINT fk_logs_region FOREIGN KEY (region_id) REFERENCES regions(region_id),
   CONSTRAINT chk_logs_severity CHECK (severity IN ('I', 'W', 'E', 'C'))
-);
+) TABLESPACE USERS;
 
 CREATE TABLE alerts (
   alert_id    NUMBER DEFAULT alert_id_seq.NEXTVAL PRIMARY KEY,

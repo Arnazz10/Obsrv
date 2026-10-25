@@ -22,6 +22,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible { 
 .topbar-right { margin-left:auto; display:flex; align-items:center; gap:11px; color:#9ba1a5; font-size:11px; }
 .top-status { color:#73d9a0; display:flex; align-items:center; gap:7px; }
 .top-status i,.status-dot { width:6px; height:6px; border-radius:50%; background:#48ce82; box-shadow:0 0 9px #48ce8255; }
+.top-status.offline { color:#ee8b80; }.top-status.offline i { background:#df6a60; box-shadow:0 0 9px #df6a6055; }.top-status.checking { color:#d9b96a; }.top-status.checking i { background:#d3aa48; box-shadow:0 0 9px #d3aa4855; }
 .top-divider { height:20px; width:1px; background:#292d30; margin:0 5px; }
 .user-avatar { width:27px; height:27px; display:grid; place-items:center; border-radius:50%; color:#c9d3e7; background:#28344b; font-size:11px; }
 .user-name { color:#d5d8da; }

@@ -31,7 +31,7 @@ export async function withConnection(fn) {
   try {
     await connection.execute(`
       ALTER SESSION SET
-        NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS',
+        NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS'
         NLS_TIMESTAMP_TZ_FORMAT = 'YYYY-MM-DD HH24:MI:SS.FF3 TZH:TZM'
     `);
     return await fn(connection);
