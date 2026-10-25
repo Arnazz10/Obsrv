@@ -18,29 +18,43 @@ app.use(cors({ origin: allowedOrigin }));
 app.use(express.json({ limit: '1mb' }));
 app.use(morgan('dev'));
 
-app.get('/health', async (_req, res) => {
+function asyncRoute(handler) {
+  return (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
+}
+
+app.get('/health', asyncRoute(async (_req, res) => {
   try {
-    await getPool();
+    const pool = await getPool();
+    const connection = await pool.getConnection();
+    try {
+      await connection.execute('SELECT 1 FROM dual');
+    } finally {
+      await connection.close();
+    }
     res.json({ ok: true, database: 'connected' });
   } catch (error) {
-    res.status(500).json({ ok: false, error: error.message });
+    res.status(503).json({ ok: false, database: 'unavailable', error: error.message });
   }
-});
+}));
 
-app.post('/api/logs/ingest', ingestLog);
-app.get('/api/logs/search', searchLogs);
-app.get('/api/logs', browseLogs);
-app.get('/api/logs/service/:service', getLogsByService);
-app.get('/api/dashboard/summary', getSummary);
-app.get('/api/dashboard/anomalies', getAnomalies);
+app.post('/api/logs/ingest', asyncRoute(ingestLog));
+app.get('/api/logs/search', asyncRoute(searchLogs));
+app.get('/api/logs', asyncRoute(browseLogs));
+app.get('/api/logs/service/:service', asyncRoute(getLogsByService));
+app.get('/api/dashboard/summary', asyncRoute(getSummary));
+app.get('/api/dashboard/anomalies', asyncRoute(getAnomalies));
 
 app.use((error, _req, res, _next) => {
   console.error(error);
-  res.status(500).json({ error: error.message || 'Internal server error' });
+  const unavailable = error.code === 'NJS-503' || error.code === 'ORA-12541';
+  res.status(unavailable ? 503 : 500).json({
+    error: error.message || 'Internal server error',
+    ...(unavailable ? { database: 'unavailable' } : {})
+  });
 });
 
-const server = app.listen(port, async () => {
-  await getPool();
+const server = app.listen(port, () => {
+  getPool().catch((error) => console.error('Oracle pool initialization failed:', error.message));
   console.log(`Obsrv backend listening on port ${port}`);
 });
 
