@@ -1,6 +1,19 @@
-const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+const configuredBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.trim();
+
+function getBaseUrl() {
+  if (configuredBaseUrl) return configuredBaseUrl.replace(/\/+$/, '');
+  if (process.env.NODE_ENV === 'development') return 'http://localhost:4000';
+
+  const host = typeof window === 'undefined' ? '' : window.location.hostname;
+  if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:4000';
+  return '';
+}
 
 export function apiUrl(path) {
+  const baseUrl = getBaseUrl();
+  if (!baseUrl) {
+    throw new Error('NEXT_PUBLIC_BACKEND_URL is not configured for this deployment.');
+  }
   return `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
 }
 

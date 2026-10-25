@@ -4,6 +4,7 @@ dist/
 build/
 .env
 .env.local
+.vercel/
 *.log
 __pycache__/
 .pytest_cache/

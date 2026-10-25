@@ -100,6 +100,22 @@ python3 generate_logs.py
 
 The generator emits log events every 1-2 seconds and posts them to the ingestion API.
 
+## Deploy the frontend to Vercel
+
+The Next.js frontend lives in `frontend/` inside this npm workspace. In Vercel, import this repository and set:
+
+- **Root Directory:** `frontend`
+- **Framework Preset:** Next.js
+- **Build Command:** `npm run build` (default)
+- **Output Directory:** leave the Next.js default
+- **Environment Variable:** `NEXT_PUBLIC_BACKEND_URL=https://<your-public-backend-host>`
+
+Set `NEXT_PUBLIC_BACKEND_URL` for Production and Preview, then redeploy after changing it. The value must be the public base URL of the Express API, with no trailing slash. In production, the frontend reports a clear configuration error if this variable is missing instead of sending API requests to a visitor's local machine.
+
+Vercel hosts the frontend only. Deploy the Express backend and Oracle database separately, and set the backend's `CORS_ORIGIN` to the Vercel site origin (for example, `https://your-project.vercel.app`). Configure `ORACLE_USER`, `ORACLE_PASSWORD`, `ORACLE_CONNECTION_STRING`, and `GEMINI_API_KEY` on the backend host. Keep database credentials and embedding API keys out of Vercel's frontend environment.
+
+Vercel's monorepo setup uses the app's directory as its Root Directory; the repository root lockfile identifies the npm workspace/package manager. See [Vercel's monorepo setup](https://vercel.com/docs/monorepos) and [build configuration](https://vercel.com/docs/builds/configure-a-build).
+
 ## API endpoints
 
 - `POST /api/logs/ingest`
