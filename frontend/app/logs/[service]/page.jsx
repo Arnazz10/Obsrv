@@ -2,92 +2,33 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { getJson } from '../../../lib/api';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/card';
-import { Badge } from '../../../components/ui/badge';
-import { Alert } from '../../../components/ui/alert';
-import { Table, TableCell, TableHead, TableRow } from '../../../components/ui/table';
 
-function severityTone(severity) {
-  if (severity === 'C') return 'darkred';
-  if (severity === 'E') return 'red';
-  if (severity === 'W') return 'amber';
-  return 'blue';
+function Severity({ value }) {
+  const labels = { C: 'Critical', E: 'High', W: 'Warning', I: 'Info' };
+  const tone = value === 'C' ? 'critical' : value === 'E' ? 'high' : value === 'W' ? 'warning' : 'info';
+  return <span className={`severity severity-${tone}`}>{labels[value] || value}</span>;
 }
-
-const demoData = {
-  service: 'payment-gateway',
-  rows: [
-    {
-      log_id: 1,
-      region_name: 'US',
-      local_log_time: '2026-09-20 12:04:10 -07:00',
-      severity: 'C',
-      user_impact: 'transactions may be delayed or declined',
-      message: 'payment gateway timeout',
-      payload: { message: 'payment gateway timeout', meta: { user_impact: 'transactions may be delayed or declined' } }
-    },
-    {
-      log_id: 2,
-      region_name: 'EU',
-      local_log_time: '2026-09-20 20:10:22 +01:00',
-      severity: 'E',
-      user_impact: 'transactions may be delayed or declined',
-      message: 'checkout API not responding',
-      payload: { message: 'checkout API not responding', meta: { user_impact: 'transactions may be delayed or declined' } }
-    }
-  ]
-};
 
 export default function ServiceDetailPage() {
   const { service } = useParams();
   const [data, setData] = useState(null);
-  const [notice, setNotice] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!service) return;
-    getJson(`/api/logs/service/${encodeURIComponent(service)}`)
-      .then(setData)
-      .catch((err) => {
-        setNotice(`Demo mode: ${err.message}`);
-        setData(demoData);
-      });
+    getJson(`/api/logs/service/${encodeURIComponent(service)}`).then(setData).catch((err) => { setError(err.message || 'Could not load service events.'); setData({ service, rows: [] }); });
   }, [service]);
 
-  if (!data) return <div className="text-slate-400">Loading service logs...</div>;
-
-  return (
-    <div className="space-y-6">
-      {notice ? <Alert tone="amber">{notice}</Alert> : null}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{data.service}</CardTitle>
-          <CardDescription>All logs for one service across regions, with user impact annotations.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHead className="grid-cols-[1.1fr_0.8fr_0.8fr_0.8fr_2fr_1.4fr]">
-              <div>Time</div>
-              <div>Region</div>
-              <div>Severity</div>
-              <div>Impact</div>
-              <div>Message</div>
-              <div>Raw payload</div>
-            </TableHead>
-            {data.rows.map((row) => (
-              <TableRow key={row.LOG_ID || row.log_id} className="grid-cols-[1.1fr_0.8fr_0.8fr_0.8fr_2fr_1.4fr] items-start gap-3">
-                <TableCell className="text-slate-300">{row.LOCAL_LOG_TIME || row.local_log_time}</TableCell>
-                <TableCell>{row.REGION_NAME || row.region_name}</TableCell>
-                <TableCell><Badge tone={severityTone(row.SEVERITY || row.severity)}>{row.SEVERITY || row.severity}</Badge></TableCell>
-                <TableCell className="text-slate-400">{row.USER_IMPACT || row.user_impact || 'n/a'}</TableCell>
-                <TableCell className="text-slate-300">{row.MESSAGE || row.message}</TableCell>
-                <TableCell className="text-xs text-slate-500">{JSON.stringify(row.PAYLOAD || row.payload)}</TableCell>
-              </TableRow>
-            ))}
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  if (!data) return <div className="security-dashboard"><div className="empty-row">Loading service events…</div></div>;
+  return <div className="security-dashboard">
+    <div className="dashboard-title"><div><div className="eyebrow">SERVICE INVESTIGATION</div><h1>{data.service}</h1><p>Recent events associated with this service.</p></div><Link href="/logs" className="panel-link">← All events</Link></div>
+    {error && <div className="connection-notice"><span>{error}</span><Link href="/">Overview</Link></div>}
+    <section className="panel"><div className="panel-heading"><h2>Service event history</h2><span className="panel-caption">{data.rows.length} events · latest 500</span></div><div className="table-scroll"><table className="data-table"><thead><tr><th>Time</th><th>Region</th><th>Severity</th><th>User impact</th><th>Message</th><th>Payload</th></tr></thead><tbody>
+      {data.rows.map((row) => <tr key={row.LOG_ID || row.log_id}><td className="time-cell">{row.LOCAL_LOG_TIME || row.local_log_time}</td><td>{row.REGION_NAME || row.region_name}</td><td><Severity value={row.SEVERITY || row.severity}/></td><td>{row.USER_IMPACT || row.user_impact || '—'}</td><td className="event-name">{row.MESSAGE || row.message}</td><td><details><summary>Inspect</summary><pre>{JSON.stringify(row.PAYLOAD || row.payload || {}, null, 2)}</pre></details></td></tr>)}
+      {!data.rows.length && <tr><td colSpan="6" className="empty-row">{error ? 'Service events are unavailable until the backend reconnects.' : 'No events recorded for this service.'}</td></tr>}
+    </tbody></table></div></section>
+    <style jsx>{`details { position:relative; color:#9aadd0; font-size:9px; cursor:pointer; } summary { list-style:none; } summary::-webkit-details-marker { display:none; } pre { position:absolute; z-index:2; right:0; top:14px; min-width:230px; max-width:360px; max-height:250px; overflow:auto; padding:10px; border:1px solid #343a40; border-radius:4px; background:#101213; color:#c4c9cc; font-size:9px; white-space:pre-wrap; box-shadow:0 8px 24px #0009; }`}</style>
+  </div>;
 }

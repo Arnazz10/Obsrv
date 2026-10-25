@@ -1,107 +1,43 @@
 "use client";
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { getJson } from '../../lib/api';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
-import { Input } from '../../components/ui/input';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import { Alert } from '../../components/ui/alert';
 
-function severityTone(severity) {
-  if (severity === 'C') return 'darkred';
-  if (severity === 'E') return 'red';
-  if (severity === 'W') return 'amber';
-  return 'blue';
+function Severity({ value }) {
+  const labels = { C: 'Critical', E: 'High', W: 'Warning', I: 'Info' };
+  const tone = value === 'C' ? 'critical' : value === 'E' ? 'high' : value === 'W' ? 'warning' : 'info';
+  return <span className={`severity severity-${tone}`}>{labels[value] || value}</span>;
 }
 
-const demoResults = [
-  {
-    log_id: 1,
-    service_name: 'payment-gateway',
-    region_name: 'US',
-    local_log_time: '2026-09-20 12:04:10 -07:00',
-    severity: 'C',
-    message: 'payment gateway timeout',
-    distance: 0.0312,
-    similarity: 0.9688
-  },
-  {
-    log_id: 2,
-    service_name: 'checkout-api',
-    region_name: 'EU',
-    local_log_time: '2026-09-20 20:10:22 +01:00',
-    severity: 'E',
-    message: 'checkout API not responding',
-    distance: 0.0421,
-    similarity: 0.9579
-  }
-];
-
 export default function SearchPage() {
-  const [query, setQuery] = useState('database connection timeout');
+  const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [searched, setSearched] = useState(false);
+  const [error, setError] = useState('');
 
-  async function runSearch(value = query) {
-    setLoading(true);
-    setError('');
+  async function runSearch(event) {
+    event?.preventDefault();
+    if (query.trim().length < 2) { setError('Enter at least two characters to search.'); return; }
+    setLoading(true); setError(''); setSearched(true);
     try {
-      const data = await getJson('/api/logs/search?q=' + encodeURIComponent(value));
+      const data = await getJson(`/api/logs/search?q=${encodeURIComponent(query.trim())}`);
       setResults(data.results || []);
-    } catch (err) {
-      setError(`Demo mode: ${err.message}`);
-      setResults(demoResults);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { setResults([]); setError(err.message || 'Search is unavailable. Check the backend connection.'); }
+    finally { setLoading(false); }
   }
 
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Semantic log search</CardTitle>
-          <CardDescription>Type an incident pattern and query the Oracle vector index.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3 md:flex-row">
-          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="payment gateway timeout" />
-          <Button onClick={() => runSearch()} disabled={loading}>
-            {loading ? 'Searching...' : 'Search'}
-          </Button>
-        </CardContent>
-      </Card>
-
-      <Button variant="secondary" onClick={() => runSearch('database connection timeout')} disabled={loading}>
-        Try a sample query
-      </Button>
-
-      {error ? <Alert tone="red">{error}</Alert> : null}
-
-      {results.length === 0 ? <Alert tone="blue">Run a search to see semantically similar logs.</Alert> : null}
-
-      <div className="grid gap-4">
-        {results.map((row) => (
-          <Card key={row.LOG_ID || row.log_id}>
-            <CardHeader>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <CardTitle className="text-base">{row.MESSAGE || row.message}</CardTitle>
-                  <CardDescription>
-                    {row.SERVICE_NAME || row.service_name} • {row.REGION_NAME || row.region_name} • {row.LOCAL_LOG_TIME || row.local_log_time}
-                  </CardDescription>
-                </div>
-                <Badge tone={severityTone(row.SEVERITY || row.severity)}>{row.SEVERITY || row.severity}</Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="flex items-center justify-between text-sm text-slate-400">
-              <span>Distance {Number(row.DISTANCE ?? row.distance ?? 0).toFixed(4)}</span>
-              <span>Similarity {Number(row.SIMILARITY ?? row.similarity ?? 0).toFixed(4)}</span>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
+  return <div className="security-dashboard">
+    <div className="dashboard-title"><div><div className="eyebrow">INCIDENT INVESTIGATION</div><h1>Threat search</h1><p>Find events with similar meaning using semantic search.</p></div><Link href="/logs" className="panel-link">Browse all events →</Link></div>
+    <section className="panel search-panel"><div className="panel-heading"><h2>Search event messages</h2><span className="panel-caption">Oracle vector search</span></div><form className="search-form" onSubmit={runSearch}><span className="search-symbol">⌕</span><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Describe an incident, e.g. database connection timeout" aria-label="Search event messages"/><button className="apply-button" disabled={loading}>{loading ? 'Searching…' : 'Search events'}</button></form><p className="search-hint">Results are ranked by semantic similarity to the query.</p></section>
+    {error && <div className="connection-notice"><span>{error}</span><Link href="/">Overview</Link></div>}
+    <section className="panel results-panel"><div className="panel-heading"><h2>Matching events</h2><span className="panel-caption">{loading ? 'Searching…' : searched ? `${results.length} results` : 'Enter a search above'}</span></div>
+      {results.length ? <div className="search-results">{results.map((row) => <article className="result-card" key={row.LOG_ID || row.log_id}><div className="result-main"><div className="result-message">{row.MESSAGE || row.message}</div><div className="result-meta"><Link href={`/logs/${encodeURIComponent(row.SERVICE_NAME || row.service_name)}`}>{row.SERVICE_NAME || row.service_name}</Link><span>·</span><span>{row.REGION_NAME || row.region_name}</span><span>·</span><span>{row.LOCAL_LOG_TIME || row.local_log_time}</span></div></div><div className="result-side"><Severity value={row.SEVERITY || row.severity}/><span className="similarity">{(Number(row.SIMILARITY ?? row.similarity ?? 0) * 100).toFixed(1)}% match</span></div></article>)}</div> : <div className="empty-state"><span className="empty-search">⌕</span><b>{searched ? 'No matching events' : 'Search your event history'}</b><p>{searched ? 'Try a broader phrase or review the event log.' : 'Use plain language to find related incidents and messages.'}</p></div>}
+    </section>
+    <style jsx>{`
+      .search-panel { margin-bottom:14px; }.search-form { display:flex; align-items:center; gap:10px; padding:15px 14px 6px; }.search-symbol { color:#7188b5; font-size:22px; line-height:1; }.search-form input { flex:1; min-width:0; height:36px; border:1px solid #303538; border-radius:4px; background:#0e1011; color:#e5e7e8; padding:0 11px; font-size:11px; }.search-form input::placeholder { color:#656d72; }.search-hint { padding:0 14px 12px 45px; margin:0; color:#747b80; font-size:9px; }.apply-button { height:36px; border:1px solid #31518b; background:#1a3159; color:#c3d4f4; border-radius:4px; padding:0 14px; cursor:pointer; font-size:10px; white-space:nowrap; }.apply-button:hover { background:#234071; }.apply-button:disabled { opacity:.55; cursor:wait; }.search-results { padding:5px 12px; }.result-card { min-height:66px; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:11px 3px; border-bottom:1px solid #25292b; }.result-card:last-child { border-bottom:0; }.result-main { min-width:0; }.result-message { color:#e0e2e3; font-size:11px; overflow-wrap:anywhere; }.result-meta { display:flex; gap:7px; flex-wrap:wrap; margin-top:7px; color:#858c91; font-size:9px; }.result-meta a { color:#a9bce0; }.result-side { display:flex; flex-direction:column; align-items:flex-end; gap:6px; white-space:nowrap; }.similarity { color:#7d858a; font-size:9px; }.empty-state { min-height:190px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px; }.empty-search { color:#5674aa; font-size:25px; margin-bottom:6px; }.empty-state b { color:#cfd2d4; font-size:11px; font-weight:500; }.empty-state p { color:#767e83; font-size:10px; margin:6px 0 0; }
+      @media(max-width:580px) { .search-form { flex-wrap:wrap; }.search-form input { flex-basis:calc(100% - 40px); }.search-form button { width:100%; }.result-card { align-items:flex-start; }.result-side { align-items:flex-end; } }
+    `}</style>
+  </div>;
 }

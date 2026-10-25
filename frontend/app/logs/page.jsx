@@ -1,132 +1,69 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { getJson } from '../../lib/api';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
-import { Input } from '../../components/ui/input';
-import { Button } from '../../components/ui/button';
-import { Select } from '../../components/ui/select';
-import { Badge } from '../../components/ui/badge';
-import { Alert } from '../../components/ui/alert';
-import { Table, TableCell, TableHead, TableRow } from '../../components/ui/table';
 import Link from 'next/link';
+import { getJson } from '../../lib/api';
 
-function severityTone(severity) {
-  if (severity === 'C') return 'darkred';
-  if (severity === 'E') return 'red';
-  if (severity === 'W') return 'amber';
-  return 'blue';
+const initialFilters = { region: '', service: '', severity: '', from: '', to: '' };
+
+function Severity({ value }) {
+  const labels = { C: 'Critical', E: 'High', W: 'Warning', I: 'Info' };
+  const tone = value === 'C' ? 'critical' : value === 'E' ? 'high' : value === 'W' ? 'warning' : 'info';
+  return <span className={`severity severity-${tone}`}>{labels[value] || value || 'Unknown'}</span>;
 }
 
-const demoRows = [
-  {
-    log_id: 1,
-    service_name: 'payment-gateway',
-    region_name: 'US',
-    local_log_time: '2026-09-20 12:04:10 -07:00',
-    severity: 'C',
-    message: 'payment gateway timeout'
-  },
-  {
-    log_id: 2,
-    service_name: 'cache-service',
-    region_name: 'Japan',
-    local_log_time: '2026-09-20 04:10:22 +09:00',
-    severity: 'W',
-    message: 'cache miss rate high'
-  }
-];
-
 export default function LogsPage() {
-  const [filters, setFilters] = useState({ region: '', service: '', severity: '', from: '', to: '' });
+  const [filters, setFilters] = useState(initialFilters);
   const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
   async function loadLogs(nextFilters = filters) {
     setLoading(true);
     setError('');
     try {
       const params = new URLSearchParams();
-      for (const [key, value] of Object.entries(nextFilters)) {
-        if (!value) continue;
-        if (key === 'from' || key === 'to') {
-          params.set(key, new Date(value).toISOString());
-        } else {
-          params.set(key, value);
-        }
-      }
-      const data = await getJson(`/api/logs${params.toString() ? `?${params.toString()}` : ''}`);
+      Object.entries(nextFilters).forEach(([key, value]) => {
+        if (!value) return;
+        params.set(key, key === 'from' || key === 'to' ? new Date(value).toISOString() : value);
+      });
+      const data = await getJson(`/api/logs${params.size ? `?${params}` : ''}`);
       setRows(data.rows || []);
     } catch (err) {
-      setError(`Demo mode: ${err.message}`);
-      setRows(demoRows);
-    } finally {
-      setLoading(false);
-    }
+      setRows([]);
+      setError(err.message || 'Could not load events. Check the backend connection.');
+    } finally { setLoading(false); }
   }
 
-  useEffect(() => {
-    loadLogs();
-  }, []);
+  useEffect(() => { loadLogs(initialFilters); }, []);
+  function update(key, value) { setFilters((current) => ({ ...current, [key]: value })); }
 
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Log browser</CardTitle>
-          <CardDescription>Filter logs by region, service, severity, and date range.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-6">
-          <Input placeholder="Region" value={filters.region} onChange={(e) => setFilters((prev) => ({ ...prev, region: e.target.value }))} />
-          <Input placeholder="Service" value={filters.service} onChange={(e) => setFilters((prev) => ({ ...prev, service: e.target.value }))} />
-          <Select value={filters.severity} onChange={(e) => setFilters((prev) => ({ ...prev, severity: e.target.value }))}>
-            <option value="">Severity</option>
-            <option value="I">Info</option>
-            <option value="W">Warning</option>
-            <option value="E">Error</option>
-            <option value="C">Critical</option>
-          </Select>
-          <Input type="datetime-local" value={filters.from} onChange={(e) => setFilters((prev) => ({ ...prev, from: e.target.value }))} />
-          <Input type="datetime-local" value={filters.to} onChange={(e) => setFilters((prev) => ({ ...prev, to: e.target.value }))} />
-          <Button onClick={() => loadLogs()} disabled={loading}>{loading ? 'Loading...' : 'Apply filters'}</Button>
-        </CardContent>
-      </Card>
-
-      {error ? <Alert tone="red">{error}</Alert> : null}
-
-      {rows.length === 0 ? <Alert tone="blue">No logs loaded yet. Apply filters or wait for the stream.</Alert> : null}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent logs</CardTitle>
-          <CardDescription>All timestamps are already converted to each region's local timezone.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHead className="grid-cols-[1.1fr_1.2fr_0.8fr_0.8fr_2fr]">
-              <div>Time</div>
-              <div>Service</div>
-              <div>Region</div>
-              <div>Severity</div>
-              <div>Message</div>
-            </TableHead>
-            {rows.map((row) => (
-              <TableRow key={row.LOG_ID || row.log_id} className="grid-cols-[1.1fr_1.2fr_0.8fr_0.8fr_2fr] items-center gap-3">
-                <TableCell className="text-slate-300">{row.LOCAL_LOG_TIME || row.local_log_time}</TableCell>
-                <TableCell>
-                  <Link href={`/logs/${encodeURIComponent(row.SERVICE_NAME || row.service_name)}`} className="text-sky-300 hover:text-sky-200">
-                    {row.SERVICE_NAME || row.service_name}
-                  </Link>
-                </TableCell>
-                <TableCell>{row.REGION_NAME || row.region_name}</TableCell>
-                <TableCell><Badge tone={severityTone(row.SEVERITY || row.severity)}>{row.SEVERITY || row.severity}</Badge></TableCell>
-                <TableCell className="text-slate-400">{row.MESSAGE || row.message}</TableCell>
-              </TableRow>
-            ))}
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  return <div className="security-dashboard">
+    <div className="dashboard-title"><div><div className="eyebrow">EVENT INVESTIGATION</div><h1>Security events</h1><p>Filter, review, and inspect events from monitored services.</p></div><button className="refresh-button" onClick={() => loadLogs()} disabled={loading}>↻ <span>{loading ? 'Loading' : 'Refresh events'}</span></button></div>
+    {error && <div className="connection-notice"><span>{error}</span><Link href="/">Back to overview</Link></div>}
+    <section className="panel filter-panel"><div className="panel-heading"><h2>Filters</h2><button className="clear-button" onClick={() => { setFilters(initialFilters); loadLogs(initialFilters); }}>Clear all</button></div><form className="filter-form" onSubmit={(event) => { event.preventDefault(); loadLogs(); }}>
+      <label>Region<input value={filters.region} onChange={(e) => update('region', e.target.value)} placeholder="e.g. US, EU"/></label>
+      <label>Service<input value={filters.service} onChange={(e) => update('service', e.target.value)} placeholder="Service name"/></label>
+      <label>Severity<select value={filters.severity} onChange={(e) => update('severity', e.target.value)}><option value="">All severities</option><option value="C">Critical</option><option value="E">High</option><option value="W">Warning</option><option value="I">Info</option></select></label>
+      <label>From<input type="datetime-local" value={filters.from} onChange={(e) => update('from', e.target.value)}/></label>
+      <label>To<input type="datetime-local" value={filters.to} onChange={(e) => update('to', e.target.value)}/></label>
+      <button className="apply-button" disabled={loading}>{loading ? 'Applying…' : 'Apply filters'}</button>
+    </form></section>
+    <section className="panel log-results"><div className="panel-heading"><h2>Event log</h2><span className="panel-caption">{loading ? 'Loading events…' : `${rows.length} ${rows.length === 1 ? 'event' : 'events'} · latest 250`}</span></div><div className="table-scroll"><table className="data-table log-table"><thead><tr><th>Time</th><th>Service</th><th>Region</th><th>Severity</th><th>Message</th></tr></thead><tbody>
+      {rows.map((row) => <tr key={row.LOG_ID || row.log_id}><td className="time-cell">{row.LOCAL_LOG_TIME || row.local_log_time}</td><td><Link href={`/logs/${encodeURIComponent(row.SERVICE_NAME || row.service_name)}`}>{row.SERVICE_NAME || row.service_name}</Link></td><td>{row.REGION_NAME || row.region_name}</td><td><Severity value={row.SEVERITY || row.severity}/></td><td className="event-name">{row.MESSAGE || row.message}</td></tr>)}
+      {!loading && !rows.length && <tr><td colSpan="5" className="empty-row">{error ? 'Events are unavailable until the backend reconnects.' : 'No events match these filters.'}</td></tr>}
+    </tbody></table></div></section>
+    <style jsx>{`
+      .filter-panel { margin-bottom:14px; }
+      .filter-form { padding:14px; display:grid; grid-template-columns:repeat(5,minmax(110px,1fr)) auto; gap:9px; align-items:end; }
+      .filter-form label { display:flex; flex-direction:column; gap:6px; color:#91989d; font-size:9px; }
+      .filter-form input,.filter-form select { height:32px; min-width:0; border:1px solid #303538; background:#0e1011; color:#d9dcde; border-radius:4px; padding:0 8px; font-size:10px; }
+      .apply-button,.clear-button { border:1px solid #31518b; background:#1a3159; color:#c3d4f4; border-radius:4px; height:32px; padding:0 12px; cursor:pointer; font-size:10px; }
+      .apply-button:hover { background:#234071; }.apply-button:disabled { opacity:.55; cursor:wait; }
+      .clear-button { border-color:#303538; background:transparent; color:#969da2; height:25px; }.clear-button:hover { color:#e0e2e3; background:#ffffff08; }
+      .log-results { min-height:230px; }
+      @media(max-width:900px) { .filter-form { grid-template-columns:repeat(3,minmax(110px,1fr)); }.filter-form button { grid-column:span 1; } }
+      @media(max-width:580px) { .filter-form { grid-template-columns:repeat(2,minmax(0,1fr)); }.filter-form label { min-width:0; }.filter-form button { width:100%; } }
+    `}</style>
+  </div>;
 }
