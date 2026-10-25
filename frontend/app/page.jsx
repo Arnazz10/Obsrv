@@ -82,6 +82,7 @@ export default function DashboardPage() {
   return <div className="security-dashboard">
     <div className="dashboard-title"><div><div className="eyebrow">SECURITY OPERATIONS</div><h1>Overview</h1><p>Live signals across your monitored services</p></div><div className="updated">{checkedAt ? `Updated ${checkedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Connecting…'}</div></div>
     {error && <div className="connection-notice"><span>API unavailable · {error}</span><Link href="/logs">Open logs</Link></div>}
+    {!error && status === 'online' && logs.length === 0 && <div className="connection-notice" role="status"><span>Oracle is connected, but no events have been ingested yet. Dashboard totals reflect stored events.</span><a href="https://github.com/Arnazz10/Obsrv#6-start-the-log-generator" target="_blank" rel="noreferrer">Ingestion setup →</a></div>}
 
     <section className="stat-grid">
       <article className="stat-card"><div className="stat-label">Critical events <span className="stat-icon red">!</span></div><div className="stat-value">{criticalCount}</div><div className="stat-foot"><span className="trend red-text">{status === 'online' ? '● Live' : '—'}</span><span>in current log window</span></div><div className="sparkline red-line"/></article>
