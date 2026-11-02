@@ -2,8 +2,8 @@ import './globals.css';
 import { AppShell } from '../components/layout/app-shell';
 
 export const metadata = {
-  title: 'Obsrv',
-  description: 'AI-powered global observability platform built on Oracle Database 23ai Free'
+  title: 'Obsrv | Operations Console',
+  description: 'Operational visibility, incident alerts, and service communications'
 };
 
 export default function RootLayout({ children }) {

@@ -100,6 +100,7 @@ export default function DashboardPage() {
     <div className="dashboard-title"><div><div className="eyebrow">SECURITY OPERATIONS</div><h1>Overview</h1><p>Live signals across your monitored services</p></div><div className="updated">{checkedAt ? `Updated ${checkedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Connecting…'}</div></div>
     {error && <div className="connection-notice"><span>API unavailable · {error}</span><Link href="/logs">Open logs</Link></div>}
     {!error && status === 'online' && logs.length === 0 && <div className="connection-notice info" role="status"><span>Oracle is connected, but no events have been ingested yet. Dashboard totals reflect stored events.</span><a href="https://github.com/Arnazz10/Obsrv#6-start-the-log-generator" target="_blank" rel="noreferrer">Ingestion setup →</a></div>}
+    {!error && status === 'online' && logs.some((row) => ['C','E','W'].includes(row.SEVERITY || row.severity)) && <Link href="/incidents" className="ops-warning-banner"><span className="ops-warning-icon">!</span><span><b>Elevated events need review</b><small>{logs.filter((row) => ['C','E','W'].includes(row.SEVERITY || row.severity)).length} warning, high, or critical records in the latest log window</small></span><span className="ops-warning-action">Open alert centre →</span></Link>}
 
     <section className="stat-grid">
       <article className="stat-card"><div className="stat-label">Critical events <span className="stat-icon red">!</span></div><div className="stat-value">{criticalCount}</div><div className="stat-foot"><span className="trend red-text">{status === 'online' ? 'Live' : '—'}</span><span>in the latest 250 log records</span></div></article>
@@ -130,7 +131,7 @@ export default function DashboardPage() {
         </Panel>
       </div>
       <aside className="side-column">
-        <Panel title="Anomaly detection" action={<button className="refresh-button" onClick={refresh} disabled={status === 'checking'}>↻ <span>Refresh</span></button>}>
+        <Panel title="Anomaly detection" action={<Link href="/incidents" className="panel-link">Alert centre →</Link>}>
           <div className="alert-list">{data.anomalies.length ? data.anomalies.slice(0, 5).map((item, index) => <article className="alert-item" key={`${item.SERVICE_NAME || item.service_name}-${index}`}><div className="alert-item-top"><span className="alert-indicator"/><span className="alert-title">Unusual error volume</span><span className="alert-chevron">›</span></div><div className="alert-meta">{item.SERVICE_NAME || item.service_name} · {item.REGION_NAME || item.region_name}</div><div className="alert-description">{item.ERROR_COUNT || item.error_count} errors in the latest hourly window</div><div className="alert-bottom"><Severity value="E"/><span>{item.HOUR_START_UTC || item.hour_start_utc}</span></div></article>) : <div className="side-empty">{status === 'online' ? 'No anomalies detected in the latest hourly window.' : 'Anomaly results appear when the API is connected.'}</div>}</div>
         </Panel>
         <Panel title="Most active regions" action={<Link href="/logs" className="text-link">Logs →</Link>}>

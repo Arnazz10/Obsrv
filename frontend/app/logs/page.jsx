@@ -17,6 +17,7 @@ export default function LogsPage() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const warningCount = rows.filter((row) => ['W', 'E', 'C'].includes(row.SEVERITY || row.severity)).length;
 
   async function loadLogs(nextFilters = filters) {
     setLoading(true);
@@ -39,8 +40,9 @@ export default function LogsPage() {
   function update(key, value) { setFilters((current) => ({ ...current, [key]: value })); }
 
   return <div className="security-dashboard">
-    <div className="dashboard-title"><div><div className="eyebrow">EVENT INVESTIGATION</div><h1>Security events</h1><p>Filter, review, and inspect events from monitored services.</p></div><button className="refresh-button" onClick={() => loadLogs()} disabled={loading}>↻ <span>{loading ? 'Loading' : 'Refresh events'}</span></button></div>
+    <div className="dashboard-title"><div><div className="eyebrow">OPERATIONS · EVENT HISTORY</div><h1>Security events</h1><p>Review service activity, warnings, and incidents across your monitored estate.</p></div><button className="refresh-button" onClick={() => loadLogs()} disabled={loading}>↻ <span>{loading ? 'Loading' : 'Refresh events'}</span></button></div>
     {error && <div className="connection-notice"><span>{error}</span><Link href="/">Back to overview</Link></div>}
+    {!error && <div className="event-summary-strip"><span className="summary-live"><i/> {loading ? 'Updating event feed' : 'Event feed ready'}</span><span>{rows.length} records in current view</span><span className="summary-warning">{warningCount} elevated severity</span><Link href="/incidents">Review alerts & communications →</Link></div>}
     <section className="panel filter-panel"><div className="panel-heading"><h2>Filters</h2><button className="clear-button" onClick={() => { setFilters(initialFilters); loadLogs(initialFilters); }}>Clear all</button></div><form className="filter-form" onSubmit={(event) => { event.preventDefault(); loadLogs(); }}>
       <label>Region<input value={filters.region} onChange={(e) => update('region', e.target.value)} placeholder="e.g. US, EU"/></label>
       <label>Service<input value={filters.service} onChange={(e) => update('service', e.target.value)} placeholder="Service name"/></label>
@@ -55,6 +57,9 @@ export default function LogsPage() {
     </tbody></table></div></section>
     <style jsx>{`
       .filter-panel { margin-bottom:14px; }
+      .event-summary-strip { display:flex; align-items:center; gap:22px; min-height:46px; padding:0 15px; margin:-10px 0 16px; border:1px solid #252c32; border-radius:7px; background:linear-gradient(90deg,#12171a,#111315); color:#90999f; font-size:12px; }
+      .summary-live { color:#aab7bd; display:flex; align-items:center; gap:8px; }.summary-live i { width:7px;height:7px;border-radius:50%;background:#4acb89;box-shadow:0 0 8px #4acb8966; }
+      .summary-warning { color:#dfb970; }.event-summary-strip a { margin-left:auto; color:#a9c1f0; }.event-summary-strip a:hover { color:#d0dcf4; }
       .filter-form { padding:14px; display:grid; grid-template-columns:repeat(5,minmax(110px,1fr)) auto; gap:9px; align-items:end; }
       .filter-form label { display:flex; flex-direction:column; gap:8px; color:#a7adb1; font-size:12px; }
       .filter-form input,.filter-form select { height:42px; min-width:0; border:1px solid #303538; background:#0e1011; color:#d9dcde; border-radius:6px; padding:0 11px; font-size:13px; }
@@ -63,7 +68,7 @@ export default function LogsPage() {
       .clear-button { border-color:#303538; background:transparent; color:#aeb4b8; height:34px; font-size:12px; }.clear-button:hover { color:#e0e2e3; background:#ffffff08; }
       .log-results { min-height:230px; }
       @media(max-width:900px) { .filter-form { grid-template-columns:repeat(3,minmax(110px,1fr)); }.filter-form button { grid-column:span 1; } }
-      @media(max-width:580px) { .filter-form { grid-template-columns:repeat(2,minmax(0,1fr)); }.filter-form label { min-width:0; }.filter-form button { width:100%; } }
+      @media(max-width:580px) { .filter-form { grid-template-columns:repeat(2,minmax(0,1fr)); }.filter-form label { min-width:0; }.filter-form button { width:100%; }.event-summary-strip { flex-wrap:wrap; gap:9px 14px; padding:10px; }.event-summary-strip a { width:100%; margin-left:0; } }
     `}</style>
   </div>;
 }
