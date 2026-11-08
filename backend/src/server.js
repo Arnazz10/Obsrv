@@ -7,6 +7,9 @@ import { fileURLToPath } from 'url';
 import { getPool, shutdownPool } from './lib/db.js';
 import { ingestLog, searchLogs, browseLogs, getLogsByService, getLogById } from './routes/logs.js';
 import { getSummary, getAnomalies, getMeta } from './routes/dashboard.js';
+import { listAlerts, updateAlert, runDetectionNow, sendNotification, listNotifications, getStatus } from './routes/alerts.js';
+import { ensureSchema } from './lib/schema.js';
+import { startDetector } from './lib/detector.js';
 import { embeddingMode } from './lib/embeddings.js';
 
 dotenv.config({ path: fileURLToPath(new URL('../../.env', import.meta.url)) });
@@ -45,6 +48,12 @@ app.get('/api/logs', asyncRoute(browseLogs));
 app.get('/api/logs/service/:service', asyncRoute(getLogsByService));
 app.get('/api/logs/:id', asyncRoute(getLogById));
 app.get('/api/meta', asyncRoute(getMeta));
+app.get('/api/alerts', asyncRoute(listAlerts));
+app.post('/api/alerts/detect', asyncRoute(runDetectionNow));
+app.post('/api/alerts/:id/:action', asyncRoute(updateAlert));
+app.get('/api/notifications', asyncRoute(listNotifications));
+app.post('/api/notifications', asyncRoute(sendNotification));
+app.get('/api/status', asyncRoute(getStatus));
 app.get('/api/dashboard/summary', asyncRoute(getSummary));
 app.get('/api/dashboard/anomalies', asyncRoute(getAnomalies));
 
@@ -58,7 +67,10 @@ app.use((error, _req, res, _next) => {
 });
 
 const server = app.listen(port, () => {
-  getPool().catch((error) => console.error('Oracle pool initialization failed:', error.message));
+  getPool()
+    .then(() => ensureSchema())
+    .then(() => startDetector())
+    .catch((error) => console.error('Oracle initialization failed:', error.message));
   console.log(`Obsrv backend listening on port ${port}`);
 });
 

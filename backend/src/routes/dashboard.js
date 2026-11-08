@@ -41,7 +41,7 @@ const ANOMALY_SQL = `
     AND error_count >= 5
   ORDER BY error_count DESC`;
 
-async function loadAnomalies(connection) {
+export async function loadAnomalies(connection) {
   const result = await connection.execute(ANOMALY_SQL);
   // Rows are ordered by error count; keep one (the largest) entry per service.
   const seen = new Set();

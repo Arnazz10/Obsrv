@@ -89,7 +89,15 @@ npm run simulate -w backend  # live traffic (or: python3 generate_logs.py)
 | `/logs` | Security Events: filter by region, service, severity, time and text; live tail; event drawer with raw JSON and related events |
 | `/logs/[service]` | Per-service history and regional breakdown |
 | `/search` | Threat Search: plain-language semantic search over Oracle vectors |
-| `/incidents` | Active anomalies and critical events, acknowledge them, draft status updates |
+| `/incidents` | Alerts & Comms: auto-detected alerts (acknowledge / resolve), warning messages to users, DBA and both, sent history |
+
+## Alerts and communication
+
+- A detector runs in the API every 20 seconds. It raises an **alert** (stored in `alert_signals`) for an error spike over the 24-hour baseline, or for 3+ critical events of the same kind within 15 minutes, and **notifies the DBA automatically**.
+- On the Alerts page you can warn **users**, the **DBA**, or **both** (users get plain-language text, the DBA gets technical detail). Messages are stored in `notifications`.
+- Users see the latest warning as a banner on every page for 6 hours. The DBA sees all notices in the bell menu.
+- Set `NOTIFY_WEBHOOK_URL` (Slack-compatible) to also push every notice to a channel. Email/SMS are not built in.
+- There is no login yet, so anyone who can open the console can send a warning.
 
 ## Deploy the frontend to Vercel
 
@@ -116,6 +124,8 @@ Vercel's monorepo setup uses the app's directory as its Root Directory; the repo
 - `GET /api/logs?region=&service=&severity=C,E&text=&since_minutes=&from=&to=&limit=&offset=`
 - `GET /api/logs/:id` (event plus related events by vector distance)
 - `GET /api/meta`
+- `GET /api/alerts?status=`, `POST /api/alerts/:id/(ack|resolve|reopen)`
+- `GET /api/notifications?audience=`, `POST /api/notifications`, `GET /api/status`
 - `GET /api/logs/service/:service`
 
 ## Notes

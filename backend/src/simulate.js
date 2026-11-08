@@ -17,5 +17,5 @@ for (;;) {
     console.log(`waiting for API (${error.cause?.code || error.message})`);
     await sleep(3000);
   }
-  await sleep(800 + Math.random() * 1400);
+  await sleep(4000 + Math.random() * 4000);
 }

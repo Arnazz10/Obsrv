@@ -40,3 +40,18 @@ export function percentChange(current, previous) {
   if (!previous) return null;
   return Math.round(((current - previous) / previous) * 100);
 }
+
+export const SERVICE_IMPACT = {
+  'auth-service': 'Some people may have trouble signing in.',
+  'payment-gateway': 'Payments may be delayed or declined.',
+  'checkout-api': 'Placing orders may fail or be slow.',
+  'db-connector': 'Saving changes may be slow or fail.',
+  'cache-service': 'Pages and requests may load more slowly.',
+  'notification-service': 'Emails and alerts may arrive late.'
+};
+
+export const AUDIENCE = {
+  USERS: { label: 'Users', tone: 'bg-info/12 text-info ring-info/25' },
+  DBA: { label: 'DBA', tone: 'bg-warn/12 text-warn ring-warn/25' },
+  BOTH: { label: 'Users + DBA', tone: 'bg-brand/12 text-brand ring-brand/25' }
+};

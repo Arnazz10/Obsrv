@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import { Logo } from '../../components/ui';
+import { StatusBanner } from '../../components/notifications';
 
 const LINKS = [['Product', '/#product'], ['Why one database', '/#stack'], ['How it works', '/#how'], ['Regions', '/#regions']];
 
 export default function SiteLayout({ children }) {
   return (
     <div className="min-h-screen">
+      <StatusBanner />
       <header className="sticky top-0 z-40 border-b border-line/[.06] bg-bg/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
           <Logo />

@@ -4,7 +4,7 @@ import { embedText, embeddingMode } from './lib/embeddings.js';
 import { REGIONS, SERVICES, buildEvent, pick } from './lib/catalog.js';
 
 const HOURS = Number(process.env.SEED_HOURS || 48);
-const PER_HOUR = Number(process.env.SEED_PER_HOUR || 110);
+const PER_HOUR = Number(process.env.SEED_PER_HOUR || 600);
 const reset = process.argv.includes('--reset');
 
 const pool = await getPool();
@@ -13,6 +13,7 @@ console.log(`Seeding ${HOURS}h of history (embeddings: ${embeddingMode()})`);
 
 try {
   if (reset) {
+    for (const t of ['notifications', 'alert_signals']) { try { await conn.execute(`DELETE FROM ${t}`); } catch { /* table not created yet */ } }
     await conn.execute('DELETE FROM alerts');
     await conn.execute('DELETE FROM logs');
     await conn.commit();
