@@ -3,17 +3,19 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
 import { getPool, shutdownPool } from './lib/db.js';
-import { ingestLog, searchLogs, browseLogs, getLogsByService } from './routes/logs.js';
-import { getSummary, getAnomalies } from './routes/dashboard.js';
+import { ingestLog, searchLogs, browseLogs, getLogsByService, getLogById } from './routes/logs.js';
+import { getSummary, getAnomalies, getMeta } from './routes/dashboard.js';
+import { embeddingMode } from './lib/embeddings.js';
 
-dotenv.config();
+dotenv.config({ path: fileURLToPath(new URL('../../.env', import.meta.url)) });
 
 const app = express();
 const port = Number(process.env.PORT || 4000);
 const allowedOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000';
 
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({ origin: allowedOrigin }));
 app.use(express.json({ limit: '1mb' }));
 app.use(morgan('dev'));
@@ -31,7 +33,7 @@ app.get('/health', asyncRoute(async (_req, res) => {
     } finally {
       await connection.close();
     }
-    res.json({ ok: true, database: 'connected' });
+    res.json({ ok: true, database: 'connected', embeddings: embeddingMode() });
   } catch (error) {
     res.status(503).json({ ok: false, database: 'unavailable', error: error.message });
   }
@@ -41,6 +43,8 @@ app.post('/api/logs/ingest', asyncRoute(ingestLog));
 app.get('/api/logs/search', asyncRoute(searchLogs));
 app.get('/api/logs', asyncRoute(browseLogs));
 app.get('/api/logs/service/:service', asyncRoute(getLogsByService));
+app.get('/api/logs/:id', asyncRoute(getLogById));
+app.get('/api/meta', asyncRoute(getMeta));
 app.get('/api/dashboard/summary', asyncRoute(getSummary));
 app.get('/api/dashboard/anomalies', asyncRoute(getAnomalies));
 

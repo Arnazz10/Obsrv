@@ -60,45 +60,36 @@ Important variables:
 - `NEXT_PUBLIC_BACKEND_URL`
 - `INGESTION_URL`
 
-## 4) Install dependencies
-
-From the repository root:
+## 4) Install, seed and run
 
 ```bash
 npm install
+npm run seed      # backfills 48h of multi-region history (add `-- --reset` to replace existing rows)
+npm run dev       # API :4000 + web :3000 + live log simulator
 ```
 
-This installs the backend and frontend workspace dependencies.
+Open http://localhost:3000. With no embedding API key the backend uses a built-in offline embedder
+(`EMBEDDING_PROVIDER=local`), so semantic search works out of the box. Set `EMBEDDING_PROVIDER=gemini` or
+`openai` plus a key for provider embeddings — re-seed afterwards, since vectors from different providers are not comparable.
 
-## 5) Run the backend and frontend
-
-### Backend
+Run the pieces separately if you prefer:
 
 ```bash
-npm run dev -w backend
+npm run dev -w backend       # API
+npm run dev -w frontend      # web
+npm run simulate -w backend  # live traffic (or: python3 generate_logs.py)
 ```
 
-### Frontend
+## Pages
 
-```bash
-npm run dev -w frontend
-```
-
-### Run both together
-
-From the repository root:
-
-```bash
-npm run dev
-```
-
-## 6) Start the log generator
-
-```bash
-python3 generate_logs.py
-```
-
-The generator emits log events every 1-2 seconds and posts them to the ingestion API.
+| Route | What it does |
+| --- | --- |
+| `/` | Landing page with live error map and stats |
+| `/overview` | KPIs, regional error map, hourly trend, anomaly detection, live stream, service health |
+| `/logs` | Security Events: filter by region, service, severity, time and text; live tail; event drawer with raw JSON and related events |
+| `/logs/[service]` | Per-service history and regional breakdown |
+| `/search` | Threat Search: plain-language semantic search over Oracle vectors |
+| `/incidents` | Active anomalies and critical events, acknowledge them, draft status updates |
 
 ## Deploy the frontend to Vercel
 
@@ -119,10 +110,12 @@ Vercel's monorepo setup uses the app's directory as its Root Directory; the repo
 ## API endpoints
 
 - `POST /api/logs/ingest`
-- `GET /api/logs/search?q=<text>`
+- `GET /api/logs/search?q=<text>&severity=&limit=`
 - `GET /api/dashboard/summary`
 - `GET /api/dashboard/anomalies`
-- `GET /api/logs?region=&service=&severity=&from=&to=`
+- `GET /api/logs?region=&service=&severity=C,E&text=&since_minutes=&from=&to=&limit=&offset=`
+- `GET /api/logs/:id` (event plus related events by vector distance)
+- `GET /api/meta`
 - `GET /api/logs/service/:service`
 
 ## Notes

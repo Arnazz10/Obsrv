@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "seed": "node src/seed.js",
+    "simulate": "node src/simulate.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

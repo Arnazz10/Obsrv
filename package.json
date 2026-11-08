@@ -6,8 +6,9 @@
     "frontend"
   ],
   "scripts": {
-    "dev": "npm run dev -w backend & npm run dev -w frontend; wait",
+    "dev": "npm run dev -w backend & npm run dev -w frontend & npm run simulate -w backend; wait",
     "build": "npm run build -w backend && npm run build -w frontend",
-    "start": "npm run start -w backend & npm run start -w frontend; wait"
+    "start": "npm run start -w backend & npm run start -w frontend; wait",
+    "seed": "npm run seed -w backend"
   }
 }
