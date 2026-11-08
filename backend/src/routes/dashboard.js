@@ -43,7 +43,9 @@ const ANOMALY_SQL = `
 
 async function loadAnomalies(connection) {
   const result = await connection.execute(ANOMALY_SQL);
-  return mapRows(result.rows);
+  // Rows are ordered by error count; keep one (the largest) entry per service.
+  const seen = new Set();
+  return mapRows(result.rows).filter((row) => (seen.has(row.service_id) ? false : seen.add(row.service_id)));
 }
 
 export async function getSummary(_req, res) {

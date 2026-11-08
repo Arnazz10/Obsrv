@@ -23,7 +23,7 @@ function toneFor(region) {
   return { color: '#c6f24e', label: 'Healthy' };
 }
 
-export function WorldMap({ regions = [], interactive = true, compact = false, className = '' }) {
+export function WorldMap({ regions = [], interactive = true, compact = false, arcs = false, className = '' }) {
   const router = useRouter();
   const [hover, setHover] = useState(null);
 
@@ -35,6 +35,12 @@ export function WorldMap({ regions = [], interactive = true, compact = false, cl
     });
   }, [regions]);
 
+  const arcPaths = useMemo(() => {
+    if (!arcs || regions.length < 2) return [];
+    const hub = regions.find((r) => r.region_name === 'India') || regions[0];
+    return regions.filter((r) => r !== hub).map((r) => pathGen({ type: 'LineString', coordinates: [[r.lng, r.lat], [hub.lng, hub.lat]] }));
+  }, [arcs, regions]);
+
   const active = markers.find((m) => m.region_name === hover);
 
   return (
@@ -43,6 +49,9 @@ export function WorldMap({ regions = [], interactive = true, compact = false, cl
         <path d={GRATICULE} className="map-graticule" />
         <path d={LAND} className="map-land" />
         <path d={BORDERS} fill="none" stroke="#0a0b0d" strokeWidth=".6" opacity=".7" />
+        {arcPaths.map((d, i) => (
+          <path key={i} d={d} fill="none" stroke="#c6f24e" strokeOpacity=".55" strokeWidth="1.2" strokeDasharray="4 6" className="animate-dash" />
+        ))}
         {markers.map((m) => (
           <g
             key={m.region_name}
